@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
-const sendRequest = require('./bin/request.module')
+const sendRequest = require('./bin/request.module');
+const postRequest = require('./bin/postRequest');
 
 let win;
 
@@ -12,7 +13,16 @@ ipcMain.on('menu:add', (e, item) => {
     win.webContents.send('menu:add', result);
   })
 });
-
+ipcMain.on('post:add', (e, item) => {
+  let options = {
+    method: 'POST',
+    path: '/login/',
+    body: JSON.stringify(item)
+  }
+  postRequest(options, (result) => {
+    win.webContents.send('post:add', result);
+  })
+});
 function createWindow () {
   // Create the browser window.
   win = new BrowserWindow({

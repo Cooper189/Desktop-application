@@ -1,15 +1,46 @@
 import React, {Component} from 'react';
 import { connect } from 'react-redux';
+import { addUser } from '../actions/login.action';
+import { Redirect } from 'react-router-dom';
 
 class Authorization extends Component {
+    componentDidMount() {
+        this.electron = window.require('electron');
+    }
+    loginAs() {
+        this.electron.ipcRenderer.send('post:add', {login: this._login.value, pass: this._pass.value});
+        this.electron.ipcRenderer.on('post:add', (e, item) => {
+            this.props.add(JSON.parse(item));
+        });
+    }
     render() {
+        if (this.props.user.data) {
+            return (<Redirect to="/recover" />)
+        }
         return (
             <div>
-                Authorization component
+                <div>
+                    <label>Login: </label>
+                    <input type="text" ref={(login) => this._login = login} />
+                </div>
+                <div>
+                    <label>Pass: </label>
+                    <input type="password" ref={(pass) => this._pass = pass} />
+                </div>
+                <button onClick={() => this.loginAs()}>Login</button>  
             </div>
         )
     }
 }
-const stateCurrent = (state) => ({article: state.article});
-const dispatchCurrent = (dispatch) => {};
+const stateCurrent = (state) => ({user: state.login});
+const dispatchCurrent = (dispatch) => {
+    return {
+        add: (item) => {
+          dispatch(addUser(item))
+        },
+        err(err) {
+            dispatch({type: 'ERR', err})
+        }
+      }
+};
 export default connect(stateCurrent, dispatchCurrent)(Authorization);
