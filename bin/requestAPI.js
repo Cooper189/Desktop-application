@@ -1,28 +1,23 @@
 const {net} = require('electron');
 
-class RequireAPI {
-    constructor() {}
+class RequestAPI {
+  constructor(properties) {
+    this._properties = properties;
+  }
 
-    setParams(options) {
-        this.params = {
-            method: options.method,
-            protocol: 'http:',
-            hostname: '127.0.0.1',
-            port: 8000,
-            path: options.path
-        }
-        return this
-    }
-    sendRequest( callback, requestBody=null) {
-        const request = net.request(this.params);
-        request.on('response', (response) => {
-            response.on('data', (chunk) => {
-                console.log(`BODY: ${chunk}`)
-                if (callback) callback(chunk)
-            })
-        })
-        request.end(requestBody);
-    }
+  setParams(options) {
+    this._params = Object.assign(this._properties, options);
+    return this;
+  }
+  sendRequest(callback, requestBody = null) {
+    const request = net.request(this._params);
+    request.on('response', response => {
+      response.on('data', chunk => {
+        if (callback) callback(chunk);
+      });
+    });
+    request.end(requestBody);
+  }
 }
 
-module.exports = RequireAPI;
+module.exports = RequestAPI;

@@ -1,8 +1,22 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const SendRequest = require('./bin/requestAPI');
-const api = new SendRequest(); 
+const Store = require('./bin/saveData');
+const parser = require('./bin/helper')
+
+const store = new Store({
+  _dirname: `${__dirname}\\db`,
+  configName: 'user-preferences',
+  defaults: {}
+});
 
 let win;
+
+const api = new SendRequest({
+  protocol: 'http:',
+  hostname: '127.0.0.1',
+  port: 8000
+}); 
+
 
 ipcMain.on('menu:add', (e, item) => {
   api.setParams({
@@ -12,13 +26,21 @@ ipcMain.on('menu:add', (e, item) => {
     win.webContents.send('menu:add', result);
   })
 });
+
 ipcMain.on('post:add', (e, item) => {
-  api.setParams({
-    method: 'POST',
-    path: '/login/'
-  }).sendRequest((result) => {
-    win.webContents.send('menu:add', result);
-  }, JSON.stringify(item));
+  const data = store.get('userLogin');
+
+  if (data) {
+    win.webContents.send('post:add', JSON.stringify(data));
+  } else if (item) {
+    api.setParams({
+      method: 'POST',
+      path: '/login/'
+    }).sendRequest((result) => {
+      store.set('userLogin', parser(result));
+      win.webContents.send('post:add', result);
+    }, JSON.stringify(item));
+  }
 });
 function createWindow () {
   // Create the browser window.
@@ -45,7 +67,11 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-
+// TODO add an error handler
+process.on('uncaughtException', (err) => {
+  let reg = /CONNECTION_REFused/gi;
+  console.log(reg.test(err.message))
+})
 app.on('activate', () => {
   if (win === null) {
     createWindow()

@@ -6,9 +6,12 @@ import { Redirect } from 'react-router-dom';
 class Authorization extends Component {
     componentDidMount() {
         this.electron = window.require('electron');
+        console.log('electron');
+        this.loginAs();
     }
     loginAs() {
-        this.electron.ipcRenderer.send('post:add', {login: this._login.value, pass: this._pass.value});
+        const sendItem = this._login.value ? {login: this._login.value, pass: this._pass.value} : null;
+        this.electron.ipcRenderer.send('post:add', sendItem);
         this.electron.ipcRenderer.on('post:add', (e, item) => {
             this.props.add(JSON.parse(item));
         });
